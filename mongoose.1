@@ -27,7 +27,11 @@ It is possible to specify multiple ports to listen on. For example, to
 make
 .Nm
 listen on HTTP port 80 and HTTPS port 443, one should start it as
-.Dq mongoose -ssl_cert cert.pem -ports 80,443s
+.Dq mongoose -ssl_cert cert.pem -ports 80,443s .
+.Pp
+Options may be specified in any order, with one exception: if SSL listening
+port is specified in the -ports option, then -ssl_cert option must be set
+before -ports option.
 .Pp
 Unlike other web servers,
 .Nm
@@ -74,7 +78,8 @@ Specify access control list (ACL). ACL is a comma separated list
 of IP subnets, each subnet is prepended by '-' or '+' sign. Plus means allow,
 minus means deny. If subnet mask is
 omitted, like "-1.2.3.4", then it means single IP address. Mask may vary
-from 0 to 32 inclusive. Default: not set, allow all.
+from 0 to 32 inclusive. On each request, full list is traversed, and
+last match wins. Default: not set, allow all.
 .It Fl admin_uri Ar uri
 If set,
 .Nm
@@ -115,13 +120,24 @@ decides which interpreter to use by looking at the first line of CGI script.
 Enable/disable directory listing. Default: "1" (enabled).
 .It Fl error_log Ar file
 Error log file. Default: not set, no errors are logged.
+.It Fl idle_time Ar num_seconds
+Number of seconds worker thread waits for some work before exit. Default: 10
+.It Fl max_threads Ar number
+Maximum number of worker threads to start. Default: 100
 .It Fl mime_types Ar list
 Additional to builtin mime types, in form
-"extension1=type1,extension2=type2,...".
+"extension1=type1,extension2=type2,...". Extension must include dot.
 .It Fl ports Ar port_list
 Comma-separated list of ports to listen on. If the port is SSL, a letter 's'
-must be appeneded, for example, "80,443s" will open port 80 and port 443,
-and connections on port 443 will be SSL-ed. Default: 80
+must be appeneded, for example, "-ports 80,443s" will open port 80 and port 443,
+and connections on port 443 will be SSL-ed. It is possible to specify an
+IP address to bind to. In this case, an IP address and a colon must be
+prepended to the port number, for example, "-ports 127.0.0.1:8080". Note that
+if SSL listening port is requested, then
+.Fl ssl_cert
+option must specified BEFORE
+.Fl ports
+option. Default: 8080
 .It Fl protect Ar list
 Comma separated list of URI=PATH pairs, specifying that given URIs
 must the protected with respected password files. Default: not set.
@@ -133,8 +149,6 @@ has been started.
 Comma separated list of SSI extensions. Default: "shtml,shtm".
 .It Fl ssl_cert Ar pem_file
 Location of SSL certificate file. Default: not set.
-.It Fl systray Ar yes|no
-Hide console and put an icon on system tray (Windows only). Default: no.
 .It Fl uid Ar login
 Switch to given user after startup. Default: not set.
 .El
